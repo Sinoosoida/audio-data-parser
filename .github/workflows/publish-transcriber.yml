@@ -18,17 +18,15 @@ jobs:
         with:
           fetch-depth: 1
 
-      # 2) setup buildx (docker-container driver поддерживает экспорт кэша)
+      # 2) setup buildx (по умолчанию драйвер docker, будет использовать кеш образов на runner)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-        with:
-          driver: docker-container
 
-      # 3) optional: prune старый кэш/данные, чтобы освободить место
-      - name: Prune old Docker data
-        run: docker system prune --all --force --volumes
+      # 3) очищаем кеш сборок BuildKit, а не весь Docker-хост
+      - name: Prune old BuildKit cache
+        run: docker builder prune --all --force
 
-      # 4) login в GHCR
+      # 4) login в GHCR (нужен для push образа и для кеша в registry)
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -36,7 +34,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 5) build & push с кэшированием
+      # 5) build & push с кэшированием в registry
       - name: Build and push Transcriber image
         uses: docker/build-push-action@v3
         with:
@@ -46,5 +44,5 @@ jobs:
           tags: |
             ghcr.io/sinoosoida/audio-data-parser:latest
             ghcr.io/sinoosoida/audio-data-parser:${{ github.sha }}
-          cache-from: type=local,src=/tmp/cache
-          cache-to: type=local,dest=/tmp/cache
+          cache-from: type=registry,ref=ghcr.io/sinoosoida/audio-data-parser:cache
+          cache-to: type=registry,ref=ghcr.io/sinoosoida/audio-data-parser:cache,mode=max
