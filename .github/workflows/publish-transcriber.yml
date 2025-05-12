@@ -33,3 +33,5 @@ jobs:
           tags: |
             ghcr.io/sinoosoida/audio-data-parser:latest
             ghcr.io/sinoosoida/audio-data-parser:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
